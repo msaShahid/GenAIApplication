@@ -3,3 +3,4 @@ langchain-openai
 dotenv
 langchain-google-genai
 langchain-anthropic
+streamlit
