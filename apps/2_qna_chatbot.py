@@ -30,6 +30,7 @@ def get_llm():
         model="gemini-3.1-flash-lite",
         temperature=0.7,
         max_retries=2,
+        streaming=True,
     )
 
 
@@ -63,7 +64,7 @@ if prompt:
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Convert the conversation into LangChain messages
+    # Convert conversation history into LangChain messages
     history = []
     for message in st.session_state.messages:
         if message["role"] == "user":
@@ -71,20 +72,23 @@ if prompt:
         else:
             history.append(AIMessage(content=message["content"]))
 
-    # Get the assistant's response
+    # Stream the assistant's response
     with st.chat_message("assistant"):
         try:
             with st.spinner("Gemini is thinking..."):
-                response = llm.invoke(history)
+                response_stream = llm.stream(history)
 
-            answer = response.text
-            st.markdown(answer)
+                answer = st.write_stream(
+                    chunk.text for chunk in response_stream if chunk.text
+                )
 
+            # Save the complete response to chat history
             st.session_state.messages.append({"role": "assistant", "content": answer})
 
         except Exception as e:
             st.error(
                 "Something went wrong while contacting Gemini. "
-                "Check your API key, model availability, and internet connection."
+                "Check your API key, model availability, "
+                "and internet connection."
             )
             st.caption(f"Error details: {e}")
